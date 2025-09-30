@@ -1,0 +1,52 @@
+metroapp
+#!/usr/bin/env bash
+# create_fake_metroapp.sh
+# Creates a local fake "metro-app" repo with realistic-looking artifacts for dark-web / GitHub monitoring testing.
+# SAFE: all keys are labelled TEST_ONLY_DO_NOT_USE. This script DOES NOT push to any remote.
+
+set -euo pipefail
+REPO_DIR="fake-metroapp-$(date +%s)"
+GIT_USER_NAME="Security Tester"
+GIT_USER_EMAIL="sec-tester@example.test"
+
+echo "Creating repo in ./${REPO_DIR}"
+mkdir -p "$REPO_DIR"
+cd "$REPO_DIR"
+
+# ---------- initialize git ----------
+git init -q
+git config user.name "$GIT_USER_NAME"
+git config user.email "$GIT_USER_EMAIL"
+
+# ---------- create initial README ----------
+cat > README.md <<'EOF'
+# MetroApp (FAKE) — Test repository
+
+This repository contains a **fake** metro/transit mobile/web application used only for detection and monitoring tests.
+All credentials and tokens in this repository are **test placeholders** and must not be used for any real system.
+
+Purpose:
+- Generate realistic GitHub artifacts (configs, .env, build files, commits, branches) for dark-web / GitHub monitor testing.
+EOF
+
+git add README.md
+git commit -m "chore: add README" -q
+
+# ---------- create a small app structure ----------
+mkdir -p src android ios config assets
+cat > src/index.js <<'EOF'
+/**
+ * MetroApp (FAKE)
+ * Entry point
+ */
+console.log("MetroApp — Test Build");
+EOF
+
+cat > package.json <<'EOF'
+{
+  "name": "metroapp-fake",
+  "version": "0.1.0",
+  "description": "Fake metro transit app (for security monitoring tests).",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node sr
