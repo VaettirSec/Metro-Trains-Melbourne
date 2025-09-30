@@ -1,4 +1,4 @@
-metroapp
+# metroapp
 #!/usr/bin/env bash
 # create_fake_metroapp.sh
 # Creates a local fake "metro-app" repo with realistic-looking artifacts for dark-web / GitHub monitoring testing.
