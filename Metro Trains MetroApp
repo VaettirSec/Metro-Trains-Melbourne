@@ -49,4 +49,127 @@ cat > package.json <<'EOF'
   "description": "Fake metro transit app (for security monitoring tests).",
   "main": "src/index.js",
   "scripts": {
-    "start": "node sr
+    "start": "node src/index.js"
+  },
+  "license": "MIT"
+}
+EOF
+
+git add src package.json
+git commit -m "feat(app): initial app scaffold" -q
+
+# ---------- create config files that look like leaked secrets ----------
+cat > config/appsettings.json <<'EOF'
+{
+  "AppName": "MetroApp",
+  "Environment": "staging",
+  "ApiBase": "https://api.metroapp.test",
+  "GoogleMapsApiKey": "TEST_ONLY_DO_NOT_USE_googlemaps_ABC123XYZ",
+  "PushNotifKey": "TEST_ONLY_DO_NOT_USE_push_012345"
+}
+EOF
+
+cat > .env <<'EOF'
+# Environment variables (TEST ONLY)
+DB_CONNECTION=TEST_ONLY_DO_NOT_USE_db_conn_string
+API_KEY=TEST_ONLY_DO_NOT_USE_api_key_000
+SENTRY_DSN=TEST_ONLY_DO_NOT_USE_sentry_dsn
+EOF
+
+git add config .env
+git commit -m "chore(config): add staged config and .env with test placeholders" -q
+
+# ---------- add an Android manifest-like file ----------
+cat > android/AndroidManifest.xml <<'EOF'
+<!-- Fake Android manifest for MetroApp (TEST ONLY) -->
+<manifest package="com.metroapp.fake">
+  <application android:label="MetroApp">
+    <meta-data android:name="com.metroapp.API_KEY" android:value="TEST_ONLY_DO_NOT_USE_android_api_key" />
+  </application>
+</manifest>
+EOF
+
+git add android/AndroidManifest.xml
+git commit -m "feat(android): add fake Android manifest" -q
+
+# ---------- create a "credentials leak" file on a feature branch ----------
+git checkout -b feature/payment-integration >/dev/null
+cat > docs/payment_integration.md <<'EOF'
+# Payment Integration Notes (FAKE)
+
+This document contains integration notes for the (fake) payment provider.
+
+Credentials (TEST ONLY):
+- PUBLIC_KEY: TEST_ONLY_DO_NOT_USE_PUBLIC_abcdef
+- PRIVATE_KEY: TEST_ONLY_DO_NOT_USE_PRIVATE_abcdef
+
+Reminder: real keys should never be committed. This repo intentionally uses placeholders.
+EOF
+
+git add docs
+git commit -m "docs: add payment integration notes (placeholders)" -q
+
+# create more realistic noise: change, commit, merge back to main
+git checkout main >/dev/null
+git merge --no-ff feature/payment-integration -m "merge: payment integration docs (test placeholder)" >/dev/null
+
+# ---------- create a branch called leaked/credentials to simulate accidental leak ----------
+git checkout -b leaked/credentials
+cat > leaked/README_LEAK.md <<'EOF'
+# Leaked credentials (SIMULATION)
+
+This file simulates an accidental leak. ALL entries are TEST PLACEHOLDERS.
+- ADMIN_EMAIL: admin@metroapp.test
+- ADMIN_PASSWORD: TEST_ONLY_DO_NOT_USE_admin_password_123
+- OAUTH_SECRET: TEST_ONLY_DO_NOT_USE_oauth_secret_456
+EOF
+
+# Add an accompanying "screengrab" (text-based) to make it look more realistic
+cat > leaked/notes.txt <<'EOF'
+Found an old backup with credentials. Removing later.
+-- devops
+EOF
+
+git add leaked
+git commit -m "test(leak): add simulated leaked credential files (TEST_ONLY_DO_NOT_USE)" -q
+
+# Add a tag and additional commits to simulate history
+git checkout main >/dev/null
+git tag -a "v0.0.1-test" -m "test release tag"
+
+# Make a few additional innocuous commits to build history
+for i in 1 2 3; do
+  echo "chore: housekeeping $i" >> CHANGELOG.md
+  git add CHANGELOG.md
+  git commit -m "chore: update changelog (#$i)" -q
+done
+
+# ---------- summary file for operators ----------
+cat > TEST_README_HOW_TO_USE.md <<'EOF'
+TEST REPO: How to use
+
+This repository was created by create_fake_metroapp.sh for monitoring tests.
+
+Key notes:
+- All tokens are explicit placeholders named "TEST_ONLY_DO_NOT_USE".
+- This script does NOT push to remotes. If you must place this in GitHub for monitoring, create a *private* test org/repo and ensure it's authorized.
+- To simulate detection, you can:
+  1) create a test GitHub org and push this repo there (only if allowed)
+  2) upload selected files as Gists in a test account (not recommended publicly)
+  3) feed files directly to your monitoring pipeline
+
+DO NOT SHARE outside authorized test boundaries.
+EOF
+
+git add TEST_README_HOW_TO_USE.md
+git commit -m "chore: add test usage notes" -q
+
+# ---------- finish ----------
+echo "Repository ${REPO_DIR} created with branches:"
+git branch --all
+echo
+echo "Run: cd ${REPO_DIR} to inspect. Example:"
+echo "  cd ${REPO_DIR}"
+echo "  git log --oneline --graph --all"
+echo
+echo "REMEMBER: Do NOT publish real secrets. Use a private test org if you push to GitHub."
